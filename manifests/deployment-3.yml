@@ -1,0 +1,19 @@
+apiVersion : apps/v1
+kind: Deployment
+metadata:
+  name: "kikijojo-bb8d"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: "kikijojo-bb8d"
+  template:
+    metadata:
+      labels:
+        app: "kikijojo-bb8d"
+    spec:
+      containers:
+        - name: "kikijojo-bb8d"
+          image: "token1.azurecr.io/kikijojo"
+          ports:
+          - containerPort: 80
