@@ -1,0 +1,51 @@
+on: [push]
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    
+    - uses: azure/docker-login@v1
+      with:
+        login-server: token1.azurecr.io
+        username: ${{ secrets.acr_token1_username }}
+        password: ${{ secrets.acr_token1_password }}
+    
+    - name: Build and push image to ACR
+      id: build-image
+      run: |
+        docker build "$GITHUB_WORKSPACE/burner-wallet-plugin" -f  "burner-wallet-plugin/Dockerfile" -t token1.azurecr.io/kikijojo:${{ github.sha }} --label dockerfile-path=burner-wallet-plugin/Dockerfile
+        docker push token1.azurecr.io/kikijojo:${{ github.sha }}
+    
+    - uses: azure/k8s-set-context@v1
+      with:
+         kubeconfig: ${{ secrets.aks_kikijojo_kubeConfig }}
+      id: login
+    
+    - name: Create namespace
+      run: |
+        namespacePresent=`kubectl get namespace | grep kikijojo8946 | wc -l`
+        if [ $namespacePresent -eq 0 ]
+        then
+            echo `kubectl create namespace kikijojo8946`
+        fi
+
+    - uses: azure/k8s-create-secret@v1
+      with:
+        namespace: kikijojo8946
+        container-registry-url: token1.azurecr.io
+        container-registry-username: ${{ secrets.acr_token1_username }}
+        container-registry-password: ${{ secrets.acr_token1_password }}
+        secret-name: kikijojodockerauth
+       
+    - uses: azure/k8s-deploy@v1.2
+      with:
+        namespace: kikijojo8946
+        manifests: |
+          manifests/deployment-4.yml
+          manifests/service-4.yml
+          manifests/ingress-4.yml
+        images: |
+          token1.azurecr.io/kikijojo:${{ github.sha }}
+        imagepullsecrets: |
+          kikijojodockerauth
