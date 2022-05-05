@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+    name: "kikijojo-bb8d"
+    labels:
+        app: "kikijojo-bb8d"
+    annotations:
+        kubernetes.io/ingress.class: addon-http-application-routing
+spec:
+    rules:
+        - host: kikijojo9d75-kikijojo-bb8d.ef8ccc43938143a2a8c3.australiaeast.aksapp.io
+          http:
+            paths:
+            - path: /
+              backend:
+                serviceName: "kikijojo-bb8d"
+                servicePort: 80
